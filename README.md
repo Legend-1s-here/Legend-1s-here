@@ -1,5 +1,5 @@
 # 💫 About Me:
-I'm currently working on basic C++ Projects<br>I'm currently studying B-tech from MIT-AOE<br>I'm currently learning DSA<br> 
+I'm currently working on Cpp Projects<br>Currently studying B-tech from MIT-AOE<br>learning DSA<br> 
 
 
 ## 🌐 Socials:
