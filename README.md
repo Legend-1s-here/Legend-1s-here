@@ -1,5 +1,5 @@
 # 💫 About Me:
-I'm currently working on Some Crazy Projects<br>Currently studying B-tech from MIT-AOE<br>learning DSA<br> 
+Hi I am Priyansh Shrivastava<br>I'm currently working on Some Crazy Projects<br>studying B-tech from MIT-AOE<br>learning DSA<br> 
 
 
 ## 🌐 Socials:
