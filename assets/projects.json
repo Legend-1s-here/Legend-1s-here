@@ -1,0 +1,21 @@
+{
+  "_comment": "Featured repositories for Priyansh's profile. Descriptions can be refined later.",
+  "projects": [
+    {
+      "repo": "Limitless",
+      "description": "A project built and maintained by Priyansh."
+    },
+    {
+      "repo": "Junkyard",
+      "description": "A personal project and experimental space."
+    },
+    {
+      "repo": "Vision-For-Blind",
+      "description": "An accessibility-focused project."
+    },
+    {
+      "repo": "Omnikon",
+      "description": "A project from Priyansh's repository collection."
+    }
+  ]
+}
