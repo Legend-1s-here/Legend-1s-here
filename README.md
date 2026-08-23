@@ -25,10 +25,6 @@
 
 ## `~/` whoami
 
-```console
-$ cat about.txt
-```
-
 Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Programmer** who enjoys building projects and solving problems.
 
 - Currently working on personal projects and improving my problem-solving skills
