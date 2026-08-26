@@ -30,7 +30,7 @@ Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Progr
 - Currently working on personal projects and improving my problem-solving skills
 - Focused on becoming a stronger competitive programmer
 - Exploring creative ways to build with code
-- Fun fact: **I enjoy turning ideas into working projects.**
+- Vibe Coding for fun
 
 <br>
 
