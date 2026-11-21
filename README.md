@@ -1,25 +1,17 @@
-<div align="center">
-
-<!-- PROFILE PHOTO - loaded from Priyansh's GitHub profile -->
-<img src="https://github.com/Legend-1s-here.png?size=300" width="300" alt="Priyansh Shrivastava">
-
-<br>
-
-<!-- NAME / TAGLINE - animated typing -->
-<a href="https://github.com/Legend-1s-here">
+<div align="center"> <!-- Animated ASCII Knight --> <a href="https://legend-1s-here.github.io/Legend-1s-here/">
+<img src="https://placehold.co/300x300/141518/39D353?text=ASCII+KNIGHT" width="300" alt="Open the animated ASCII Knight">
+</a>   
+ <!-- NAME / TAGLINE - animated typing --> <a href="https://github.com/Legend-1s-here">
   <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=26&duration=2600&pause=900&color=39D353&center=true&vCenter=true&width=560&lines=Priyansh+Shrivastava;Vibe+Coder;Competitive+Programmer" alt="typing banner">
-</a>
+</a>   
+ <!-- SOCIALS -->
 
-<br>
-
-<!-- SOCIALS -->
 <a href="https://instagram.com/pri_y_a_nsh"><img src="https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white" alt="Instagram"></a>
 <a href="https://www.linkedin.com/in/priyansh-shrivastava-90a93836b/"><img src="https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white" alt="LinkedIn"></a>
 <a href="mailto:priyanshpratham2000@gmail.com"><img src="https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white" alt="Email"></a>
 
-<img src="https://komarev.com/ghpvc/?username=Legend-1s-here&style=flat&color=39d353&label=profile+views" alt="profile views">
-
-</div>
+<img src="https://komarev.com/ghpvc/?username=Legend-1s-here&style=flat&color=39d353&label=profile+views" alt="profile views"> </div>
+<!-- GitHub README files cannot execute JavaScript; the animation is hosted through GitHub Pages. -->
 
 ---
 
@@ -28,19 +20,19 @@
 Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Programmer** who enjoys building projects and solving problems.
 
 - Currently working on personal projects and improving my problem-solving skills
+
 - Focused on becoming a stronger competitive programmer
+
 - Exploring creative ways to build with code
+
 - Vibe Coding for fun
 
-<br>
 
 <div align="center">
 
 ## Tech Stack
 
-<img src="https://skillicons.dev/icons?i=cpp,c,python,typescript,firebase,nodejs,mongodb,git,github,vscode,html,css&perline=8" alt="tech stack">
-
-</div>
+<img src="https://skillicons.dev/icons?i=cpp,c,python,typescript,firebase,nodejs,mongodb,git,github,vscode,html,css&perline=8" alt="tech stack"> </div>
 
 ---
 
@@ -50,30 +42,18 @@ Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Progr
 
 <table>
 <tr>
-<td width="50%" align="center" valign="middle">
-
-<!-- Self-rated radar - edit assets/skills.json, the workflow redraws it -->
-<picture>
+<td width="50%" align="center" valign="middle"> <!-- Self-rated radar - edit assets/skills.json, the workflow redraws it --> <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="assets/radar-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/radar-light.svg">
   <img src="assets/radar-dark.svg" width="400" alt="skill radar chart">
-</picture>
-
-</td>
-<td width="50%" align="center" valign="middle">
-
-<!-- Live radar built from real language byte counts across your repos -->
-<picture>
+</picture> </td>
+<td width="50%" align="center" valign="middle"> <!-- Live radar built from real language byte counts across your repos --> <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="assets/radar-langs-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/radar-langs-light.svg">
   <img src="assets/radar-langs-dark.svg" width="400" alt="language radar chart">
-</picture>
-
-</td>
+</picture> </td>
 </tr>
-</table>
-
-</div>
+</table> </div>
 
 ---
 
@@ -81,19 +61,17 @@ Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Progr
 
 ## Contribution Activity
 
-<!-- 3D isometric calendar, regenerated every 6h by .github/workflows/metrics.yml -->
-<img src="assets/metrics.isocalendar.svg" width="90%" alt="3D isometric contribution calendar">
+<!-- 3D isometric calendar, regenerated every 6h by .github/workflows/metrics.yml --> <img src="assets/metrics.isocalendar.svg" width="90%" alt="3D isometric contribution calendar">
 
-<br><br>
 
-<!-- Snake eats the contribution graph - .github/workflows/snake.yml -->
-<picture>
-  <source media="(prefers-color-scheme: dark)"  srcset="https://raw.githubusercontent.com/Legend-1s-here/Legend-1s-here/output/snake-dark.svg">
+
+
+
+<!-- Snake eats the contribution graph - .github/workflows/snake.yml --> <picture>
+<source media="(prefers-color-scheme: dark)"  srcset="https://raw.githubusercontent.com/Legend-1s-here/Legend-1s-here/output/snake-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Legend-1s-here/Legend-1s-here/output/snake.svg">
   <img src="https://raw.githubusercontent.com/Legend-1s-here/Legend-1s-here/output/snake.svg" width="100%" alt="snake eating the contribution graph">
-</picture>
-
-</div>
+</picture> </div>
 
 ---
 
@@ -102,20 +80,13 @@ Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Progr
 ## GitHub Statistics
 
 <!-- Generated by scripts/cards.py into this repo. Deliberately NOT
-     github-readme-stats / streak-stats / github-profile-trophy: those are
-     shared public instances that go down and take the whole section with them. -->
-<picture>
+github-readme-stats / streak-stats / github-profile-trophy: those are
+     shared public instances that go down and take the whole section with them. --> <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="assets/card-stats-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/card-stats-light.svg">
   <img src="assets/card-stats-dark.svg" width="480" alt="GitHub statistics">
-</picture>
-
-<br>
-
-<img src="assets/metrics.languages.svg" height="165" alt="most used languages">
-
-
-</div>
+</picture>   
+ <img src="assets/metrics.languages.svg" height="165" alt="most used languages"> </div>
 
 ---
 
@@ -124,13 +95,12 @@ Hi, I'm **Priyansh Shrivastava**. I’m a **Vibe Coder** and **Competitive Progr
 ## Featured Projects
 
 | project | description | primary stack |
-|---|---|---|
-| **[Limitless](https://github.com/Legend-1s-here/Limitless)** | A project built and maintained by Priyansh. | `HTML` |
-| **[Junkyard](https://github.com/Legend-1s-here/Junkyard)** | A personal project and experimental space. | `HTML` |
-| **[Vision-For-Blind](https://github.com/Legend-1s-here/Vision-For-Blind)** | An accessibility-focused project. | `Python` |
-| **[Omnikon](https://github.com/Legend-1s-here/Omnikon)** | A project from Priyansh's repository collection. | `HTML` `Python` |
+| --- | --- | --- |
+| [**Limitless**](https://github.com/Legend-1s-here/Limitless) | A project built and maintained by Priyansh. | `HTML` |
+| [**Junkyard**](https://github.com/Legend-1s-here/Junkyard) | A personal project and experimental space. | `HTML` |
+| [**Vision-For-Blind**](https://github.com/Legend-1s-here/Vision-For-Blind) | An accessibility-focused project. | `Python` |
+| [**Omnikon**](https://github.com/Legend-1s-here/Omnikon) | A project from Priyansh's repository collection. | `HTML` `Python` |
 
 </div>
 
 ---
-
