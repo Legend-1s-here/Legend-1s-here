@@ -1,5 +1,5 @@
-<div align="center"> <!-- Animated ASCII Knight --> <a href="https://legend-1s-here.github.io/Legend-1s-here/">
-<img src="https://placehold.co/300x300/141518/39D353?text=ASCII+KNIGHT" width="300" alt="Open the animated ASCII Knight">
+<div align="center"> <!-- ASCII Knight static image --> <a href="https://legend-1s-here.github.io/Legend-1s-here/">
+<img src="assets/ascii-knight.png" width="700" alt="ASCII Knight">
 </a>   
  <!-- NAME / TAGLINE - animated typing --> <a href="https://github.com/Legend-1s-here">
   <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=26&duration=2600&pause=900&color=39D353&center=true&vCenter=true&width=560&lines=Priyansh+Shrivastava;Vibe+Coder;Competitive+Programmer" alt="typing banner">
@@ -11,7 +11,7 @@
 <a href="mailto:priyanshpratham2000@gmail.com"><img src="https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white" alt="Email"></a>
 
 <img src="https://komarev.com/ghpvc/?username=Legend-1s-here&style=flat&color=39d353&label=profile+views" alt="profile views"> </div>
-<!-- GitHub README files cannot execute JavaScript; the animation is hosted through GitHub Pages. -->
+<!-- Click the image to open the animated version on GitHub Pages. -->
 
 ---
 
