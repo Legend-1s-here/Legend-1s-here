@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Knight</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #141518; overflow: hidden; }
+  /* ภาพเต็มหน้าต่างเบราว์เซอร์ (ขยายให้ใหญ่ที่สุดโดยไม่ตัดภาพ) */
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block;
+    object-fit: contain; background: #141518; }
+</style>
+</head>
+<body>
+<canvas id="view" aria-label="อัศวิน ASCII กับผ้าคลุมสีแดงที่ปลิวตามลม"></canvas>
+<script>
+"use strict";
+// ================================================================ ตั้งค่า
+const LOOP = 2.4;            // ผ้าสะบัด 1 รอบใช้กี่วินาที (ทุกการเคลื่อนไหวครบรอบพอดี -> วนลูปเนียน)
+const WAVE = 3.2;            // ความแรงของคลื่นผ้า
+const GLOW = 0.5;            // แสงฟุ้ง
+const BREATH = 0.9;          // อัศวินหายใจ: ช่วงตัวยกขึ้นลงกี่แถว (0 = นิ่ง)
+const SWAY = 0.7;            // อัศวินโยกตัวซ้ายขวาเบา ๆ กี่คอลัมน์ (0 = นิ่ง)
+const CLOAK = 3.2;           // ผ้าคลุมขาด ๆ ด้านขวาพลิ้วตามลมกี่คอลัมน์ (0 = นิ่ง)
+const GRASS_WIND = 2.0;      // ลมพัดทุ่งหญ้าแรงแค่ไหน
+const GRASS_HEIGHT = 1.7;    // ความสูงหญ้า (1 = เตี้ย, 2 = สูงมาก)
+const HORIZON = 0.56;        // เส้นขอบฟ้าอยู่ที่ความสูงเท่าไหร่ของภาพ (0 = บนสุด, 1 = ล่างสุด)
+const FONT_SIZE = 12, FPS = 30;
+const BG = [0x14, 0x15, 0x18];
+const KNIGHT_RGB = [0.64, 0.66, 0.70];
+const RED = [0.80, 0.09, 0.11], RED_DARK = [0.34, 0.02, 0.04];       // ผ้าแดงด้าน ๆ (ไม่มันวาว)
+const GRASS_FAR = [0.20, 0.27, 0.26], GRASS_NEAR = [0.32, 0.50, 0.28], GRASS_TIP = [0.82, 0.72, 0.40];
+
+// ตัวอักษรเรียงจากบาง -> ทึบ (ชุดเดียวกับภาพต้นฉบับ: สัญลักษณ์ล้วน ไม่มีตัวหนังสือ)
+const BUCKETS = [" ", ".", ":-", "=+", "*%", "#", "@"];
+const LEVELS = [0.06, 0.18, 0.32, 0.48, 0.64, 0.80];
+
+// ภาพอัศวิน (จากภาพต้นฉบับ แปลงเป็นความเข้มของแต่ละช่อง 0-f)
+const KNIGHT = {"cols": 152, "rows": 119, "data": ["00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000004777767782000000000000000000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000377d700000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000377d30000030000003000000000000000000000000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000000000178b3500003000000034341000000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000177400000000000000033336720000000000000000000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000000067c3000000000345000030422100000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000277800000000000300030334331220000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000678000000000000003035035976430353000000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000001458000000000000003534696458b950000000000000000000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000377500000003330050678cc9b9321002300000000000000000000000000000000000000000000000000000000000000000000", "000000000000000000000000003000000000000000000000003783000000000055474797b89a7878753530000000000000000000000000000000000000000000000000000000000000000000", "0000000000000000002631560479000000000000000000000257975350030557757dddaa8aabbbd9555548950000000000000000000000000000000000000000000000000000000000000000", "000000000000000025568552669744000000000000000000277acc9ac567775774999da7ca867ad9464256775767000000000000000000000000000000000000000000000000000000000000", "00000000000000000059898499ae000000000000000000006bbbcc8743067959bdad91cf8898899bd955567786777773000000000056addcbbbcc75000000000000000000000000000000000", "00000000000000000005feabfea00000000000000000000005bcb74644477799ddd1deea88bbbb779ca57778779997777973009bbdddddccdccdc9addb600000000000000000000000000000", "000000000000000000003aa9a50000000000000000000000005ba878ad9999dd90bec57cddeecdddb99a976bdd979797730dbdbbbbdb797776786899999dd000000000000000000000000000", "000000000000000000000597c000000000000000000000000005ddbbcad99970fec169cdc9bedbcdb9bc99ba9ad999745fdddda786ca610000000256899ddbf0000000000000000000000000", "000000000000000000000255c0000000000000000000000000027ddd9add07ff949dda77ceddcbcddbaccccadc7d990fcdb9763564000000000000000037ddcf400000000000000000000000", "0000000000000000000008c6c00000000000000000000000000028bb81afeb59dd77dee88bcdddccdcbbaabcadd97bddc70640300000000000130000033509dcf00000000000000000000000", "000000000000000000003867c00000000000000000000000000002bfefd45d999efa7bdeddcddbbbbdecbcddc795bdcc5300441034000341000002756736700dcd1000000000000000000000", "000000000000000000004a47c40000000000000000000000000004a82bedafff33eecbaadfebbcbdeeca9aa8c78edd5000300053100004200000039ac77775554b1000000000000000000000", "000000000000000000004a87dc00000000000000000000000000005fddcfe75cf84ddddacdecbbdedbbba98757bbb7000756655300004589acb9bcbddc617455390000000000000000000000", "000000000000000000038c78ca0000000000000000000000000000004fd7aff3bdbd9bdfdbdebdfdcffedc7966bd3000305344009a3000320038567771667fc3940000000000000000000000", "00000000000000000005dc66fc000000000000000000000000000000001dbfcfb9def948abbdfffeeedb47788dc4000000004762000000440145755350000009c40000000000000000000000", "000000000000000006936777aa00000000000000000000000000000000006fcdfef6ddbbbdefddfca94738bb48003000000974100000006beebbcbbcea400007097100000000000000000000", "0000000000000000440063016a0000000000000000000000000000000001bd7ffadbecbdffeffdcb746965786700400000971000079300023004a35443005d70004710000000000000000000", "00000000000000980018cfd9655b90000000000000000000000000000006bd009becbdefffefb7a72ad97ac74300000070000082000000000018c79965300007c30000000000000000000000", "000000000000044000140004fece9755000000000000000000000000003eb400004beeeddeb6465126689abb30003000550085100000037abbbcdbbddc74000007d100000000000000000000", "0000000000004999bdfefec7176ddbccb10000000000000000013300003eb3000000cbda78467645765accfc00000054507d74103ba00000005a069877454dc5005b20000000000000000000", "0000000000000000023368eeffedd9dff1000000000000021123500002ced700000304557866634566aeecd84499005507d565410000000000024305006600007b1410000000000000000000", "000000000000046553bb9964317cefffd1000000000000002324300052cfe40000000367737676779ffedddd903450f49d94d200000008edca8678abbced000003b600000000000000000000", "000000000000065248eefffefddd8fff90000000000000000244000016bcef500040046435877aeeeea69b8a97540975997760003400000000002731400007c503d100000000000000000000", "00000000000000442386777648efeffcb10000000000331023000002abcfef54530376657ceffffe95279b8dcd595b9579d9464000000000001545764717000dc70000000000000000000000", "0000000000000005adfefffefffebbc979100000008a730047407bdbdbbcef979056bdefffeffb6223388aabddb77709d977910000030331026565300035d5007d1000000000000000000000", "0000000000000000026bedbbcddbbbdcfee91000005520049bbbadcbdeffe7dc300007cfffe9000045565abba9abb057777491094000002333548addc400007c570000000000000000000000", "000000000000335469bb98a7d7bd97754005860000000079667ccea9dcfe7dcf00000003723000000399cca8744dbbf7307ec8500000000023002300006d3009f00000000000000000000000", "0000050005878acddcb9c9568bc5efccd77d10050000047975899acaabffeffc3000000000050000027997306602ebcfffea7600000000002355796000000975c00000000000000000000000", "000007677bb3000006a789848c59b479bbbea99544203aeb99bdcbc9bfffeffc0000000066000000028bcb3044451bccffd975105acabddcccbcfffd83000077000000000000000000000000", "0000569a400000000016553566030303beefcdb5899775ab99bddffecfffeff930000000ab975200028bac99977777ddd9d100035566358aabdcccdcefed0599000000000000000000000000", "00004a30000000000003788778000003feeffeeea9abca776adbbbbdeffebffd00503651a7259bb6139db8799767d797c3000003003003146568789addcfed37000000000000000000000000", "00000000000000000003544444400009feeffcbbdddddcedaacebbbccfffeffc404034107c957344338b98bda74197d9030000050000000000147878779eefc0000b50000000000000000000", "00000000000000000000384686000004feeffcbbdddcbcbccdfeffecbbcfefff753353003b74464467799abc767594753799176c820000000000244789afe930000da1000000000000000000", "00000000000000000000258680005079bbbceecbbbbbbcddbbbbcebdefffefcd975353535ac77555798667abc56377cfffe8d75710000000014600445bdd50500009b5000000000000000000", "00000000000000000000048670003755dbbcecbbbbbbbcbbbbbbbcedeece0000597465b84bcddb999999873000005bdddd5660530000000000000000157400300000de200000000000000000", "0000000000000000000000674004977579bebbdbbbbdfffedbbbbceccddd00000597779788bebbca8600000000001b00333000000000000002430000000055300000ad600000000000000000", "0000000000000000000001770001955457dddbbbbbbdfecddbbcfecea70000000079968a979c72000000000000001d000400000000330000001535300000049370000ce30000000000000000", "00000000000000000000005460000000079ddbbbbbbdecbbcebcffeb60000000000007cd400000000000000000000750000000000000003410039ab63300079700000cc82000000000000000", "000000000000000000004c87dc0000004759ddbbbbdeccccccbbbbcec400000000000c80000000000000000000005d3000000003600000235633988a97677d900000009d4000000000000000", "0000000000000000000002568000000077d5ddddbbabcccbcebbbbbbdc40000000000c40000000000001300000004d5040004658523465147acea8adbd9979750d5976ce8200000000000000", "00000000000000000000025460000000304799cbb69cbcccbbcc90000000000000053087200000021015600000017b57990003b50056677acddcebbdbbbdddd7fbdbda7cdacd500000000000", "00000000000000000000026400000000043047923abbbcbccbcb700000000000000004a844465000028cbccfefebbbccffb465557aaabccbbbbbcfedbbdbbbccffbbbda7adddb30000000000", "0000000000000000000001430000000000003addbdddddccdca700000000007534535cdddfefdbbbbbbcca631440507dffee99789cedbbbbcffefffea763549cffec79cbca99774000000000", "000000000000000000000030300000000000038cdddddb76300000000000000745003cefffefffdbbb80000000000005447efeebbbcbbbdeeeceebba96433357cfbecbddfd83000000000000", "00000000000000000000025030000000000000000000000000000000000000377ecbeeefffeffffd700000000000030057758deffffddfddeffea478bdd997559dbddcacffea200000000000", "0000000000000000000000530000000000000000000000000000000000003007dbeefee815afb63000000000000000000054748adffeffdb9659fdc8867749cd9777d8509bda200000000000", "0000000000000000000000330000000000000000000000000000000000000459fefefee5000073000000000000000000033546777888865663133aa79778bf9779797767cfda730000000000", "00000000000000000000000000000000000000000000000000000000000537dfbefefc3000586300000000000000000000000056465777412300027d9abbbfc7447997ca7bdcd60000000000", "00000000000000000000000000000000000000000000000000000000000379f77efcb500053000000000000000005000000000000367344421200006bcebd9dfd7404797c6abb93000000000", "00000000000000000000000000000000000000000000000000000000006cef903beef3000992000000000050000177000000000034675754200000007cebbd77cfa779976ccbcd7000000000", "00000000000000000000000000000000000000000000000000000000045dbf700efef3000005300000000000000003304000000346842487300000002aceddd97dbefea954accb5000000000", "00000000000000000000000300000000000000000000000000000000015bbfc00dbbe30005a80005bffecfffeffed7000000000578250576203523302bfebd977799ded8658acdb500000000", "00000000000000000000000500000000000000000000000000000000006eeff703771009ba33bfda87876cebbbcfefffffeee500360035753568300028feb97774d79ddac89ceddd80000000", "0000000000000000000000050000000000000000000000000000000002dceffffec7103573bffc4000003abdddbcebddcbbbeeeffd7404ab9baab30049ebd79799bdbbdbd97bdca468000000", "000000000000000000000014000000000000000000000000000000000015bbcffefe792057add930000158bbcabcebdddbbdddbbbddbb767668378368eed777549dbadddd87bddc702600000", "0000000000000000000000140000000000000000000000000000000000019dfffef200053008a730001308c9addbdd9ddd7d97cddb87acdc74736768aced99799dddbdbd9657beda52520000", "0000000000000000000000140000000000000000000000000000000000000004bef6108cd8adf800000003999adbddddd7bd7dea88549bbdeb6648addbbbb977cd99ddbda568999ca4000000", "000000000000000000000014000000000000000000000000000000000000000000000cd7038dfb30000004dbddddbbdcdd7beeeda567abbdefd97b7abcebd77dc977ddbda78678bd80000000", "000000000000000000000044000000000000000000000000000000000000000030003ca205cfda72000137abbbddbbcd77bbbbdac965adcdefdbc98dbceb977dc7799ddb9787bdda52300000", "000000000000000000000014000000000000000000000000000000000000000000006797bdefb7aa5000028bbdbbbf7dcdd977cacbbbbbbbcfeccfebcebb979cc7777999cacbbdb610000000", "0000000000000000000003050000000000000000000000000000000000000000000000009dddb9ba4000259feceb5dcccbdd54303addbbbbcebbcbcfeebdd79cf9777797adbbddb500000000", "000000000000000000000344000000000000000000000000000000000000000500000005cfdd96a93000066bdc8ced9c9d74400035abbbdedbbbccffebbdd79cfb9777767830067740000000", "0000000000000000000000440000000000000000000000000000000000000000500d715bfdca7aa5100003bfefedbd7777755350669bbdfdbbbbccffebbbd79ccfd975103000000780000000", "00000000000000000000004400000000000000000000000000000005500000003000039dfea899456000003ddbace9777bbd99999cbbcbbbbbbbcfffebbbd9dd900067100000000320000000", "000000000000000000000364000000000000000000000000000000000000500350000cedbdb7bb720000003dbcebb977dbbdda7cbbccbabbbbbbcfffebbbdd97000000620000000000000000", "00000000000000000000036400000000000000000000000000000000000000007400deeda99776622300004bbbce9d9779eef96053adfffeeebbcffebbbbddd9000000000000000000000000", "0000000000000000000003443300000000000000000000000005c93000000000007efec8678855552240003dddabddd979dd7710009dfddeeffeffc03bbbddd5000000000000000000000000", "000000000000000000000535550000000000000000000000000000000300000007eefcac677884364240003dbdbbbbd77dbbec5003aefdbbcffeb00005bbdbc5000000000000000000000000", "00000000000000000001436445000000000000000000000000000000000040009bcbddaca9b976555000002abdacedd99ddbb74667ceffeed940000002bbbbdd000000000000000000000000", "000000000000000000000565640000000000000000000000000000000000345dbbeba9779c76754550000019a99dbd99999977977bab72000000000002bbbd59000000000000000000000000", "000000000000000000000556440000000000000000000000000000000003097554dd9dacdb86434450000028cdddd9799979ddda720000000000000003ece907000000000000000000000000", "0000000000000000000024444400000000000000000000000000000000000755379bd7c8b976444674013016cfeddd999997d8771000000000000000002bb957000000000000000000000000", "000000000000000000002764440000000000000000000000000000000030535379797adede97554563013016ddbdd9779999997c40000000000000000002e7c7000000000000000000000000", "00000000000000000000176664000000000000000000000000000000000055559d77deddba77566455000007bd97dbdccddd9dd863000000000000300001700f000000000000000000000000", "0000000000000000000017644400000000000000000000000000000003145777d54efeeffb67586487200006a777dbffcbddddda93000455456563550000000d000000000000000000000000", "00000000000000000000175464000000000000000000000000000000355477795dbbbdefda86794479700003dd999bcfddbbddd6444446766673550440000000000000000000000000000000", "0000000000000000000026645600000000000000000000000000005797677770bbcbbdcdfa78673257400003ddd9d9fddbdd9753446578789987300333000000000000000000000000000000", "000000000000000000002751440000000000000053000000000023668977db0dbbcbbdefda79862379900163bdddddc9ddddd87655599ba89bddb87675000000000000000000000000000000", "000000000000000000002754440000000000000bdb5200000000631868dcebcffbcbbdefd969543344200037bd9dddddcbdd9767bcddbbcdddccdcadc0000000000000000000000000000000", "000000000000000000002754760000000000000039800000001302687dddb9ccbbcbbdefe879754668a40003ddd9dd9dcbd979abbbcbbcdccddddcd900000000000000000000000000000000", "00000000000000000000275676000000000000000359ba9d95154458db76efccbecbeeefa9867776578600019bbbd99ddd997cbbbddbbbccbcccdb9000000000000000000000000000000000", "00000000000000000000277764000000000000000005678bccddc8664779bbcffbecbdeeacb84676578800019bbbdddccdd99bddbbcbbbbbccccc90000000000000000000000000000000000", "000000000000000000002777760000000000000000035978aa87bbaadcebdbccfecbeeeda99845875ada30016bbddddddbb97103cdcbbbbbbcdca50000000000000000000000000000000000", "0000000000000000000026777400000000000000003679776689adddbbdbbbccbecefeefccb955787ac800016bddddcfddd971003acbbbbbbbcb950000000000000000000000000000000000", "000000000000000000001777740000000000000000345976ab9bddbbdddbbddcbbce300bdcbdb9adcab800016dbdbbcc9ddd710007bbdecbbcb9970000000000000000000000000000000000", "0000000000000000000026777500000000000000003658789bdccdbbddbdddfcb9100006abbdededbbb800005bbbbbcdcbb9100000acbbbbbcdb983000000000000000000000000000000000", "0000000000000000000026777500000000000003668679789bccdddcbbbbdbc400000000ac8300000000000014359ddccbbd100000008ddbbbabdc7000000000000000000000000000000000", "000000000000000000002677750000000771000033787acabdaaddbcbbbdd00000000000000000000000026bc5030034577740000000004acdfecc7500000000000000000000000000000000", "000000000000000000002477730000000006dbbdffedbccdbbdb8ddbaba000000000000000000000005db668dbce700007714100000000000288763000000000000000000000000000000000", "0000000000000000000024777000000000047cddfdbbbcbbbbcdb599700000000000000000000000274000006579dbfc34430500000000000000000000000000000000000000000000000000", "00000000000000000000247770000000000049cdbbbbbcddccddc7500000000000000000000000032000000330347779cb156b30000000000000000000000000000000000000000000000000", "00000000000000000000079970000000000057cdbbbbccbbbcda50000000000000000000000000058400008dba4335547079dd20000000000000000000000000000000000000000000000000", "0000000000000000000005877000000000000055889accbb9500000000000000000000000000009a200000006579b757059ddb30000000000000000000000000000000000000000000000000", "000000000000000000000177700000000000000000000000000000000000000000000000000006400000003000344790047dd710000000000000000000000000000000000000000000000000", "000000000000000000000178600000000000000000000000000000000000000000000000000004740003aa30533005304377d200000000000000000000000000000000000000000000000000", "0000000000000000000002785000000000000000000000000000000000000000000000000000320000000569a643500379396000000000000000000000000000000000000000000000000000", "000000000000000000000158000000000000000000000000000000000000000000000000003500000000000048da040477730000000000000000000000000000000000000000000000000000", "000000000000000000000005000000000000000000000000000000000000000000000000050000006c83003300674409d7000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000000000000000000000000000000000027ca605304770750000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000000000000000000000000000000000000028da451745000000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000000000000000000000000000045ab600130016da1d00000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000000034454679503004676000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000003353365566555677c00000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000053446755676778550000000000000000000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000000000000000000000008948addddda899ba00000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000355460000000000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"]};
+const FONT = `${FONT_SIZE}px Menlo, Consolas, "DejaVu Sans Mono", "Courier New", monospace`;
+const probe = document.createElement("canvas").getContext("2d");
+probe.font = FONT;
+const CW = Math.max(1, Math.round(probe.measureText("M").width)), CH = FONT_SIZE;   // ช่องเท่าภาพต้นฉบับ
+const fitCols = (rows) => Math.round(rows * CH / CW * innerWidth / Math.max(1, innerHeight));
+const ROWS = Math.max(KNIGHT.rows, Math.min(260, Math.round(KNIGHT.cols * CW / CH * innerHeight / Math.max(1, innerWidth))));
+const COLS = Math.max(KNIGHT.cols, Math.min(560, fitCols(ROWS))), N = COLS * ROWS;
+const KX = Math.floor((COLS - KNIGHT.cols) / 2), KY = ROWS - KNIGHT.rows;     // ตำแหน่งอัศวินในตาราง
+
+// ================================================================ คณิตศาสตร์
+const TAU = Math.PI * 2;
+const clamp = (x, lo = 0, hi = 1) => (x < lo ? lo : x > hi ? hi : x);
+function smoothstep(a, b, x) { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); }
+function hash3(a, b, c) {
+  let h = (Math.imul(a, 73856093) ^ Math.imul(b, 19349663) ^ Math.imul(c, 83492791)) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+}
+const rnd = (k, n) => hash3(k, n, 5150) / 4294967296;
+const lerp3 = (a, b, k) => { k = clamp(k); return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; };
+
+// ================================================================ ตาราง (หน่วย: 1 = ความสูง 1 แถว, ช่องกว้างครึ่งแถว)
+const Xc = new Float32Array(COLS), Yr = new Float32Array(ROWS);
+for (let c = 0; c < COLS; c++) Xc[c] = (c + 0.5) * 0.5;
+for (let r = 0; r < ROWS; r++) Yr[r] = r + 0.5;
+const lum = new Float32Array(N), rgb = new Float32Array(N * 3);
+const KC = KNIGHT.cols, KR = KNIGHT.rows, knightLum = new Float32Array(KC * KR);
+KNIGHT.data.forEach((row, r) => { for (let c = 0; c < KC; c++) knightLum[r * KC + c] = parseInt(row[c], 16) / 15; });
+const knightMask = new Uint8Array(KC * KR);                    // ขยายเงาตัวออกเล็กน้อย กันหญ้าโผล่ทะลุช่องเล็ก ๆ
+for (let r = 0; r < KR; r++) for (let c = 0; c < KC; c++) {
+  let on = 0;
+  for (let dr = -1; dr <= 1 && !on; dr++) for (let dc = -2; dc <= 2; dc++) {
+    const rr = r + dr, cc = c + dc;
+    if (rr >= 0 && rr < KR && cc >= 0 && cc < KC && knightLum[rr * KC + cc] > 0.08) { on = 1; break; }
+  }
+  knightMask[r * KC + c] = on;
+}
+const isKnight = new Uint8Array(N), glyph = new Int8Array(N);   // glyph = ตัวอักษรที่บังคับใช้ (-1 = เลือกตามความเข้ม)
+function set(i, l, col) { lum[i] = l; isKnight[i] = 0; glyph[i] = -1; const j = i * 3; rgb[j] = col[0]; rgb[j + 1] = col[1]; rgb[j + 2] = col[2]; }
+
+// วาดรูปเรียวไปตามเส้นโค้ง: เรียก fn(ช่อง, ตำแหน่งตามยาว a, ระยะขวาง q -1..1, แถว, คอลัมน์)
+const SEG = new Float64Array(40 * 9);
+function brush(pts, hws, av, fn) {
+  const n = pts.length, ns = n - 1;
+  let ymin = 1e9, ymax = -1e9, maxw = 0;
+  for (let k = 0; k < n; k++) { ymin = Math.min(ymin, pts[k][1]); ymax = Math.max(ymax, pts[k][1]); maxw = Math.max(maxw, hws[k]); }
+  for (let s = 0; s < ns; s++) {
+    const o = s * 9, ax = pts[s][0], ay = pts[s][1], dx = pts[s + 1][0] - ax, dy = pts[s + 1][1] - ay;
+    SEG[o] = ax; SEG[o + 1] = ay; SEG[o + 2] = dx; SEG[o + 3] = dy; SEG[o + 4] = 1 / (dx * dx + dy * dy + 1e-9);
+    SEG[o + 5] = hws[s]; SEG[o + 6] = hws[s + 1] - hws[s]; SEG[o + 7] = av[s]; SEG[o + 8] = av[s + 1] - av[s];
+  }
+  const r0 = Math.max(0, Math.floor(ymin - maxw - 1)), r1 = Math.min(ROWS, Math.ceil(ymax + maxw + 1));
+  for (let r = r0; r < r1; r++) {
+    const py = Yr[r];
+    let rx0 = 1e9, rx1 = -1e9;                          // ช่วงแนวนอนที่รูปผ่านแถวนี้จริง ๆ
+    for (let s = 0, o = 0; s < ns; s++, o += 9) {
+      const pw = Math.max(SEG[o + 5], SEG[o + 5] + SEG[o + 6]) + 1, ya = SEG[o + 1], yb = ya + SEG[o + 3];
+      if (py < Math.min(ya, yb) - pw || py > Math.max(ya, yb) + pw) continue;
+      const xa = SEG[o], xb = xa + SEG[o + 2];
+      rx0 = Math.min(rx0, Math.min(xa, xb) - pw); rx1 = Math.max(rx1, Math.max(xa, xb) + pw);
+    }
+    if (rx0 > rx1) continue;
+    const c0 = Math.max(0, Math.floor(rx0 * 2)), c1 = Math.min(COLS, Math.ceil(rx1 * 2));
+    for (let c = c0; c < c1; c++) {
+      const px = Xc[c];
+      let best = 1, bestS = -1, bestU = 0;
+      for (let s = 0, o = 0; s < ns; s++, o += 9) {
+        const qx = px - SEG[o], qy = py - SEG[o + 1], dx = SEG[o + 2], dy = SEG[o + 3];
+        let u = (qx * dx + qy * dy) * SEG[o + 4];
+        u = u < 0 ? 0 : u > 1 ? 1 : u;
+        const ex = qx - dx * u, ey = qy - dy * u;
+        let hw = SEG[o + 5] + SEG[o + 6] * u;
+        if (hw < 1e-3) hw = 1e-3;
+        const q2 = (ex * ex + ey * ey) / (hw * hw);
+        if (q2 < best) { best = q2; bestS = s; bestU = u; }
+      }
+      if (bestS < 0) continue;
+      const o = bestS * 9, cr = SEG[o + 2] * (py - SEG[o + 1]) - SEG[o + 3] * (px - SEG[o]);
+      fn(r * COLS + c, SEG[o + 7] + SEG[o + 8] * bestU, Math.sqrt(best) * (cr > 0 ? 1 : cr < 0 ? -1 : 0), r, c);
+    }
+  }
+}
+
+// ================================================================ ผ้าคลุมสีแดง
+// แต่ละเส้นผ้า: โคนที่คอ -> จุดดัด -> ปลาย, ความกว้าง, เฟสคลื่น (หน่วย x = ครึ่งคอลัมน์, y = แถว)
+const STRANDS = [
+  { root: [42, 24], ctrl: [55, 17], tip: [75, 8.5], width: 4.6, amp: 0.9, ph: 0.0 },    // แผ่นบน พลิ้วขึ้นขวาบน
+  { root: [40, 26], ctrl: [56, 24], tip: [77, 30], width: 5.6, amp: 1.0, ph: 1.9 },     // แผ่นกลาง ปลิวไปทางขวา
+  { root: [47, 20], ctrl: [60, 12], tip: [78, 4], width: 1.1, amp: 1.3, ph: 0.9 },      // ริ้วผ้าบาง ๆ ด้านบน
+  { root: [52, 29], ctrl: [64, 32], tip: [79, 38], width: 1.3, amp: 1.2, ph: 2.7 },     // ริ้วผ้าบาง ๆ ตรงกลาง
+];
+const WRAP = [
+  { pts: [[24.5, 27], [27, 29.5], [31, 30.5], [35, 28.5], [39, 26]], hws: [3.2, 3.6, 3.4, 3.2, 3.0] },   // พันรอบคอ
+  { pts: [[30, 30], [31.5, 32.5], [33, 33.6]], hws: [1.8, 1.5, 1.0] },                                  // ปมผ้าที่ห้อยลง
+];
+const OX = KX * 0.5, OY = KY;
+for (const S of STRANDS) for (const P of [S.root, S.ctrl, S.tip]) { P[0] += OX; P[1] += OY; }
+for (const W of WRAP) for (const P of W.pts) { P[0] += OX; P[1] += OY; }
+const FABRIC = 6;                                             // ตำแหน่งตัวอักษรผ้าใน GRASS_CHARS
+const lin = (n) => Array.from({ length: n }, (_, k) => k / (n - 1));
+const AV = lin(20);
+
+function strandPoints(S, t, k) {
+  const pts = [], hws = [];
+  const [R, Cp, T] = [S.root, S.ctrl, S.tip];
+  for (let i = 0; i < 20; i++) {
+    const s = i / 19, u = 1 - s;
+    const bx = u * u * R[0] + 2 * u * s * Cp[0] + s * s * T[0], by = u * u * R[1] + 2 * u * s * Cp[1] + s * s * T[1];
+    const tx = 2 * u * (Cp[0] - R[0]) + 2 * s * (T[0] - Cp[0]), ty = 2 * u * (Cp[1] - R[1]) + 2 * s * (T[1] - Cp[1]);
+    const tl = Math.hypot(tx, ty) + 1e-9, nx = -ty / tl, ny = tx / tl;
+    // คลื่นวิ่งจากโคนไปปลาย (ครบรอบพอดีทุก LOOP วินาที) ยิ่งปลายยิ่งสะบัดแรง
+    const w1 = Math.sin(TAU * (1.3 * s - t / LOOP) + S.ph);
+    const w2 = Math.sin(TAU * (2.6 * s - 2 * t / LOOP) + S.ph * 1.7);
+    const d = WAVE * S.amp * (Math.pow(s, 1.35) * w1 + 0.35 * s * s * w2);
+    pts.push([bx + nx * d, by + ny * d]);
+    const twist = 0.78 + 0.22 * Math.sin(TAU * (1.7 * s - t / LOOP) + S.ph + 1);   // ผ้าบิดตัว = กว้างแคบสลับกัน
+    hws.push(S.width * (0.7 + 0.3 * Math.sin(Math.PI * Math.min(1, s * 1.2))) * twist * (1 - 0.25 * s));
+  }
+  return { pts, hws };
+}
+
+function cloth(pts, hws, t, k, tatter, ph) {
+  brush(pts, hws, pts.length === 20 ? AV : lin(pts.length), (i, a, q, r, c) => {
+    const thr = tatter ? smoothstep(0.82, 1.0, a) : 0;
+    if (thr > 0) {                                                       // ปลายผ้าลุ่ยเล็กน้อย (รูอยู่กับเนื้อผ้า ขยับตามผ้า)
+      const hn = hash3(Math.floor(a * 55), Math.floor((q + 1) * 2.5), k + 7) % 1000 / 1000;
+      if (hn < thr * 0.45 || Math.abs(q) > 1 - 0.35 * thr * (hash3(Math.floor(a * 40), k, 3) % 1000 / 1000)) return;
+    }
+    // แสงเงาแบบผ้าจริง: สันคลื่นรับแสง ร่องคลื่นเป็นเงา (ไล่โทนกว้าง ๆ ตามความยาวผ้า ไม่เป็นเส้นลาย)
+    const crest = 0.5 + 0.5 * Math.cos(TAU * (1.3 * a - t / LOOP) + ph + Math.PI / 2);
+    const across = 0.92 + 0.08 * Math.cos(q * Math.PI);                // กลางผ้าสว่างกว่าขอบนิดเดียว
+    const rolled = 1 - 0.22 * smoothstep(0.72, 1, Math.abs(q));        // ขอบผ้าม้วนเข้า เป็นเงา
+    const l = (0.4 + 0.32 * crest) * across * rolled;
+    const col = lerp3(RED_DARK, RED, 0.2 + 0.8 * crest);
+    set(i, l, col);
+    glyph[i] = FABRIC + Math.max(0, Math.min(4, Math.floor((l - 0.26) / 0.1)));   // ลายทอ: + x X % & ตามความสว่าง
+    return;
+    set(i, l, col);
+  });
+}
+
+function scarf(t) {
+  STRANDS.forEach((S, k) => { const { pts, hws } = strandPoints(S, t, k); cloth(pts, hws, t, k, true, S.ph); });
+  const wob = 0.35 * Math.sin(TAU * t / LOOP);                          // ผ้าพันคอขยับนิด ๆ
+  WRAP.forEach((P, k) => cloth(P.pts.map(([x, y], i) => [x, y + wob * Math.sin(i * 1.3 + k)]), P.hws, t, 9 + k, false, 0.7 + k));
+  // เศษผ้าปลิวออกจากปลาย
+  const NP = 22;
+  for (let p = 0; p < NP; p++) {
+    const S = STRANDS[p % STRANDS.length];
+    const ph = ((t / (LOOP * 2) + p / NP) % 1 + 1) % 1;
+    const { pts } = strandPoints(S, t, p % STRANDS.length);
+    const at = pts[Math.min(19, 14 + (hash3(p, 2, 9) % 6))];
+    const dir = [S.tip[0] - S.ctrl[0], S.tip[1] - S.ctrl[1]], dl = Math.hypot(dir[0], dir[1]);
+    const dist = ph * (6 + 10 * rnd(p, 3));
+    const x = at[0] + dir[0] / dl * dist + 1.5 * Math.sin(TAU * ph * 2 + p);
+    const y = at[1] + dir[1] / dl * dist - ph * (2 + 4 * rnd(p, 4));
+    const c = Math.floor(x * 2), r = Math.floor(y);
+    if (c < 0 || c >= COLS || r < 0 || r >= ROWS) continue;
+    const i = r * COLS + c, l = 0.68 * (1 - 0.7 * ph) * smoothstep(0, 0.08, ph);
+    if (l > lum[i]) { set(i, l, RED); glyph[i] = FABRIC; }
+  }
+}
+
+// ================================================================ ทุ่งหญ้า
+const G_PIPE = 0, G_SLASH = 1, G_BACK = 2, G_TICK = 3, G_COMMA = 4, G_DOT = 5;   // ตัวอักษรของต้นหญ้า: | / \ ' , .
+const H0 = ROWS * HORIZON;                                    // แถวของเส้นขอบฟ้า
+const P2 = 2 * LOOP;                                          // คาบของลม (เท่ากับรอบหายใจ -> ลูปเนียน)
+const BLADES = [];
+for (let k = 0, n = Math.round(COLS * 5.5); k < n; k++) {       // ต้นหญ้าทั้งทุ่ง เรียงจากไกล -> ใกล้
+  const depth = Math.pow(rnd(k, 1), 0.75);                    // 0 = ขอบฟ้า, 1 = ใกล้สุด (ใกล้มีมากกว่า)
+  BLADES.push({ x: rnd(k, 2) * COLS * 0.5, y: H0 + depth * (ROWS + 3 - H0), depth,
+    h: (0.8 + 10 * GRASS_HEIGHT * depth * depth) * (0.45 + 1.0 * Math.pow(rnd(k, 3), 1.4)) * (0.8 + 0.2 * GRASS_HEIGHT), lean0: 0.15 + (rnd(k, 4) - 0.5) * 0.35, ph: rnd(k, 5) * TAU,
+    tint: rnd(k, 6) });
+}
+BLADES.sort((a, b) => a.y - b.y);
+const FRONT_FROM = BLADES.findIndex((B) => B.y > ROWS - 4);    // ต้นหญ้าแถวหน้าสุด วาดทับเท้าอัศวิน
+function wind(x, t) {                                         // ลมพัดเป็นระลอกจากซ้ายไปขวา
+  const gust = Math.pow(0.5 + 0.5 * Math.sin(TAU * (x / 60 - t / P2)), 3);          // ระลอกลมแรงวิ่งผ่าน
+  return GRASS_WIND * (0.18 + 0.55 * gust + 0.12 * Math.sin(TAU * (x / 17 - 2 * t / P2) + 1.3));
+}
+function blades(t, from, to) {
+  for (let k = from; k < to; k++) {
+    const B = BLADES[k], w = wind(B.x, t);
+    let lean = B.lean0 + w * (0.6 + 0.6 * B.depth)                  // ลมหลัก + แต่ละต้นสะบัดของตัวเอง
+      + (0.35 * Math.sin(TAU * 3 * t / P2 + B.ph) + 0.15 * Math.sin(TAU * 5 * t / P2 + B.ph * 1.7)) * (0.5 + B.depth);
+    lean = Math.max(-1.1, Math.min(1.5, lean));                    // ไม่ให้ลู่จนนอนราบ
+    const sheen = Math.pow(0.5 + 0.5 * Math.sin(TAU * (B.x / 60 - t / P2) - 0.3), 3);   // หญ้าที่ลู่ลมจะพลิกรับแสง
+    const h = k >= FRONT_FROM && FRONT_FROM >= 0 ? Math.min(B.h, 10) : B.h;   // หญ้าแถวหน้าสุดไม่บังตัวอัศวินมากเกิน
+    const steps = Math.max(1, Math.round(h));
+    for (let s = 0; s <= steps; s++) {
+      const u = s / steps;                                    // 0 = โคน, 1 = ปลาย
+      const x = B.x + lean * h * 0.55 * u * u, y = B.y - h * u;
+      const r = Math.floor(y), c = Math.floor(x * 2);
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+      const i = r * COLS + c;
+      const slope = 2.2 * lean * u;                           // ความเอียง (คอลัมน์ต่อแถว) -> เลือกตัวอักษร
+      const g = B.depth < 0.1 ? (u > 0.5 ? G_TICK : G_DOT) : u > 0.9 && steps > 2 ? (slope > 0.5 ? G_TICK : G_COMMA)
+        : slope > 0.6 ? G_SLASH : slope < -0.6 ? G_BACK : G_PIPE;
+      const l = (0.12 + 0.32 * B.depth) * (0.7 + 0.3 * u) * (0.75 + 0.7 * sheen * u);
+      let col = lerp3(GRASS_FAR, GRASS_NEAR, B.depth);
+      col = lerp3(col, GRASS_TIP, u * u * (0.25 + 0.35 * B.tint) + 0.45 * sheen * u);
+      if (l >= lum[i]) { set(i, l, col); glyph[i] = g; }
+    }
+  }
+}
+// ปุยดอกหญ้าลอยตามลม (เคลื่อนครบความกว้างพอดีทุกคาบลม -> ลูปเนียน)
+const FLUFF = Array.from({ length: Math.round(COLS / 3.5) }, (_, k) => ({
+  k, x0: rnd(k, 11) * COLS * 0.5, y0: H0 * (0.25 + 0.95 * rnd(k, 12)), laps: 1 + (k % 2), bob: 1 + 3 * rnd(k, 13), ph: rnd(k, 14) * TAU }));
+function fluff(t) {
+  const span = COLS * 0.5;
+  for (const F of FLUFF) {
+    const x = (F.x0 + span * F.laps * t / P2) % span;
+    const y = F.y0 + F.bob * Math.sin(TAU * t / P2 + F.ph);
+    const r = Math.floor(y), c = Math.floor(x * 2);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+    const i = r * COLS + c;
+    if (lum[i] < 0.1) { set(i, 0.42, GRASS_TIP); glyph[i] = F.k % 3 ? G_DOT : FABRIC; }   // บางเม็ดเป็น + ให้สะดุดตา
+  }
+}
+
+// ================================================================ ผ้าคลุมของอัศวิน
+const CLOAK_PAD = 8;                                          // เผื่อคอลัมน์ทางขวาให้ชายผ้าพลิ้วออกนอกภาพเดิมได้
+const cloakW = new Float32Array(KR * (KC + CLOAK_PAD));       // น้ำหนักการพลิ้ว: 0 = ติดตัว, 1 = ชายผ้าปลิวอิสระ
+for (let r = 0; r < KR; r++) for (let c = 0; c < KC + CLOAK_PAD; c++) {
+  cloakW[r * (KC + CLOAK_PAD) + c] = smoothstep(KC * 0.63, KC * 0.97, c)
+    * smoothstep(12, 22, r) * (1 - smoothstep(96, 106, r)) * (0.6 + 0.4 * smoothstep(40, 90, r));
+}
+function sampleKnight(x, y) {                                 // อ่านความเข้มของภาพอัศวินแบบเกลี่ย (ตำแหน่งทศนิยมได้)
+  if (x < 0 || y < 0 || x > KC - 1 || y > KR - 1) return 0;
+  const c0 = Math.floor(x), r0 = Math.floor(y), c1 = Math.min(KC - 1, c0 + 1), r1 = Math.min(KR - 1, r0 + 1);
+  const fx = x - c0, fy = y - r0;
+  return (knightLum[r0 * KC + c0] * (1 - fx) + knightLum[r0 * KC + c1] * fx) * (1 - fy)
+       + (knightLum[r1 * KC + c0] * (1 - fx) + knightLum[r1 * KC + c1] * fx) * fy;
+}
+
+// ================================================================ ฉาก
+function scene(t) {
+  lum.fill(0); glyph.fill(-1); isKnight.fill(0);
+  blades(t, 0, FRONT_FROM < 0 ? BLADES.length : FRONT_FROM);
+  fluff(t);
+  // หายใจ: ช่วงบนของตัวยกขึ้นลงเบา ๆ เท้าอยู่กับที่ (ครบรอบทุก 2 ลูป -> ยังวนลูปเนียน)
+  const breath = BREATH * (0.5 - 0.5 * Math.cos(TAU * t / P2));
+  const sway = SWAY * Math.sin(TAU * t / P2 + 0.8);                   // โยกตัวช้า ๆ (คาบเดียวกับการหายใจ)
+  for (let r = 0; r < KR; r++) {
+    const wgt = smoothstep(KR * 0.92, KR * 0.35, r);                   // ยิ่งสูงยิ่งขยับมาก เท้าอยู่กับที่
+    const rowLift = r + breath * wgt, rowSway = sway * wgt * wgt;
+    for (let c = 0; c < KC + CLOAK_PAD; c++) {
+      const tc = c + KX;
+      if (tc >= COLS) break;
+      // ผ้าคลุม: ยิ่งไปทางขวา (ชายผ้าที่ปลิวอิสระ) ยิ่งพลิ้วมาก คลื่นวิ่งจากบนลงล่างตามลม
+      const w = cloakW[r * (KC + CLOAK_PAD) + c];
+      let dx = 0, dy = 0;
+      if (w > 0) {
+        dx = CLOAK * w * (0.35 + 0.55 * Math.sin(TAU * (t / LOOP - r / 22 - c / 45))
+                         + 0.3 * Math.sin(TAU * (2 * t / LOOP - r / 9) + 1.1));
+        dy = 0.35 * CLOAK * w * Math.sin(TAU * (t / LOOP - c / 16) + 0.5);
+      }
+      const sx = c - dx + rowSway, sy = rowLift - dy;
+      const L = sampleKnight(sx, sy);
+      const i = (r + KY) * COLS + tc, j = i * 3;
+      if (L < 0.06) {                                                  // นอกตัว -> เห็นทุ่งหญ้า / ในตัว -> บังหญ้า
+        const mr = Math.round(sy), mc = Math.round(sx);
+        if (mr >= 0 && mr < KR && mc >= 0 && mc < KC && knightMask[mr * KC + mc]) lum[i] = 0;
+        continue;
+      }
+      lum[i] = L; glyph[i] = -1; isKnight[i] = 1;
+      rgb[j] = KNIGHT_RGB[0]; rgb[j + 1] = KNIGHT_RGB[1]; rgb[j + 2] = KNIGHT_RGB[2];
+    }
+  }
+  if (FRONT_FROM >= 0) blades(t, FRONT_FROM, BLADES.length);
+  scarf(t);
+}
+
+// ================================================================ ตัวอักษร -> ภาพ
+const view = document.getElementById("view"), ctx = view.getContext("2d");
+const W = COLS * CW, H = ROWS * CH;
+view.width = W; view.height = H;
+const START = [], COUNT = BUCKETS.map((b) => b.length);
+BUCKETS.reduce((s, b, k) => { START[k] = s; return s + b.length; }, 0);
+const GRASS_CHARS = "|/\\',." + "+xX%&", GRASS0 = BUCKETS.join("").length;   // ต่อท้ายด้วยตัวอักษรลายทอของผ้า
+const MASKS = [...BUCKETS.join("") + GRASS_CHARS].map((ch) => {
+  const g = document.createElement("canvas"); g.width = CW; g.height = CH;
+  const gx = g.getContext("2d");
+  gx.font = FONT; gx.textBaseline = "middle"; gx.fillStyle = "#fff"; gx.fillText(ch, 0, CH / 2);
+  const d = gx.getImageData(0, 0, CW, CH).data, m = new Uint8Array(CW * CH);
+  for (let k = 0; k < m.length; k++) m[k] = d[k * 4 + 3];
+  return m;
+});
+const ascii = document.createElement("canvas"); ascii.width = W; ascii.height = H;
+const actx = ascii.getContext("2d");
+const img = actx.createImageData(W, H), px32 = new Uint32Array(img.data.buffer);
+const glowA = document.createElement("canvas"), glowB = document.createElement("canvas"), glowC = document.createElement("canvas");
+[[glowA, 2], [glowB, 4], [glowC, 8]].forEach(([g, s]) => { g.width = Math.ceil(W / s); g.height = Math.ceil(H / s); });
+
+function draw() {
+  px32.fill(0);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const i = r * COLS + c, L = lum[i];
+    let m;
+    if (glyph[i] >= 0) m = MASKS[GRASS0 + glyph[i]];                       // ต้นหญ้า: ตัวอักษรตามความเอียง
+    else {
+      let level = 0;
+      while (level < LEVELS.length && L >= LEVELS[level]) level++;
+      if (level === 0) continue;
+      m = MASKS[START[level] + hash3(r, c, 1) % COUNT[level]];             // ตัวอักษรนิ่ง (เปลี่ยนตามความเข้มเท่านั้น)
+    }
+    const k = (isKnight[i] ? 0.9 : 0.6 + 0.45 * L) * 255, j = i * 3;   // อัศวินสีเรียบ ผ้าสว่างตามแสงเงา
+    const pr = Math.min(255, rgb[j] * k) | 0, pg = Math.min(255, rgb[j + 1] * k) | 0, pb = Math.min(255, rgb[j + 2] * k) | 0;
+    const col = (pb << 16) | (pg << 8) | pr;
+    let o0 = (r * CH) * W + c * CW, mi = 0;
+    for (let y = 0; y < CH; y++, o0 += W) for (let x = 0; x < CW; x++, mi++) {
+      const v = m[mi];
+      if (v) px32[o0 + x] = (v << 24) | col;
+    }
+  }
+  actx.putImageData(img, 0, 0);
+  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+  ctx.fillStyle = `rgb(${BG.join(",")})`; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(ascii, 0, 0);
+  if (GLOW > 0) {                                                          // แสงฟุ้ง: ย่อภาพลงทีละครึ่งแล้วขยายทับ
+    let src = ascii;
+    for (const g of [glowA, glowB, glowC]) {
+      const gx = g.getContext("2d");
+      gx.clearRect(0, 0, g.width, g.height); gx.drawImage(src, 0, 0, g.width, g.height); src = g;
+    }
+    ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = GLOW;
+    ctx.drawImage(glowC, 0, 0, W, H);
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+  }
+}
+
+// ================================================================ เล่น
+let t0 = performance.now(), lastDraw = -1e9;
+function tick(now) {
+  if (now - lastDraw >= 1000 / FPS - 2) {
+    lastDraw = now;
+    scene((now - t0) / 1000);
+    draw();
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+let resizeTimer = 0;
+addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const rows = Math.max(KNIGHT.rows, Math.min(260, Math.round(KNIGHT.cols * CW / CH * innerHeight / Math.max(1, innerWidth))));
+    const cols = Math.max(KNIGHT.cols, Math.min(560, fitCols(rows)));
+    if (Math.abs(cols - COLS) > 4 || Math.abs(rows - ROWS) > 4) location.reload();
+  }, 400);
+});
+</script>
+</body>
+</html>
